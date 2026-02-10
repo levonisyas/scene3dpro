@@ -1,83 +1,83 @@
-(async () => {
-  const loadOnce = (url) => new Promise((resolve, reject) => {
-    const existing = [...document.querySelectorAll("script")].find(s => (s.src || "").includes(url));
-    if (existing) return resolve();
-    const s = document.createElement("script");
-    s.src = url;
-    s.type = "module";
-    s.onload = () => resolve();
-    s.onerror = (e) => reject(e);
-    document.head.appendChild(s);
-  });
-
-  await loadOnce("/api/scene3dpro/floor3dpro-card.js");
-  await loadOnce("/api/scene3dpro/overlaypro-card.js");
-
-  class Scene3DProPanel extends HTMLElement {
-    set hass(hass) {
-      this._hass = hass;
-      if (!this._inited) this._init();
-      this._syncHass();
-    }
-    connectedCallback() {
-      if (!this._inited) this._init();
-    }
-    _init() {
-      this._inited = true;
-      this.attachShadow({ mode: "open" });
-      this.shadowRoot.innerHTML = `
-        <style>
-          :host { display:block; height: 100vh; width: 100vw; }
-          .root { position: relative; height: 100%; width: 100%; overflow: hidden; }
-          .layer { position: absolute; inset: 0; }
-          .base { z-index: 0; }
-          .top { z-index: 1; pointer-events: none; }
-          .top > * { pointer-events: auto; }
-        </style>
-        <div class="root">
-          <div class="layer base"></div>
-          <div class="layer top"></div>
-        </div>
-      `;
-      this._base = this.shadowRoot.querySelector(".base");
-      this._top = this.shadowRoot.querySelector(".top");
-      this._render();
-    }
-    _render() {
-      this._base.innerHTML = "";
-      this._top.innerHTML = "";
-
-      this._floor = document.createElement("floor3dpro-card");
-      this._floor.setConfig?.({ type: "custom:floor3dpro-card" });
-      this._base.appendChild(this._floor);
-
-      this._overlay = document.createElement("overlaypro-card");
-      this._overlay.setConfig?.({ type: "custom:overlaypro-card", portal_mode: "local" });
-      this._top.appendChild(this._overlay);
-
-      this._syncHass();
-    }
-    _syncHass() {
-      if (!this._hass) return;
-      if (this._floor) this._floor.hass = this._hass;
-      if (this._overlay) this._overlay.hass = this._hass;
-    }
+class Scene3DProPanel extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    if (!this._rendered) this._render();
   }
 
-  if (!customElements.get("scene3dpro-panel")) {
-    customElements.define("scene3dpro-panel", Scene3DProPanel);
+  set panel(panel) {
+    this._panel = panel;
+    // panel.config.title gibi şeyler burada
   }
 
-  class HaPanelScene3DPro extends HTMLElement {
-    set hass(hass) {
-      if (!this._el) {
-        this._el = document.createElement("scene3dpro-panel");
-        this.appendChild(this._el);
+  connectedCallback() {
+    if (this._hass && !this._rendered) this._render();
+  }
+
+  _render() {
+    this._rendered = true;
+    this.style.display = "block";
+    this.style.height = "100%";
+
+    // Root
+    const root = document.createElement("div");
+    root.className = "scene3dpro-root";
+
+    // Layer 1: Floor3DPro (active)
+    const base = document.createElement("div");
+    base.className = "layer layer-base";
+    const floor = document.createElement("floor3dpro-card");
+    // floor config: şimdilik boş; sonra senin config kaynağınla beslenecek
+    floor.setConfig?.({}); 
+    base.appendChild(floor);
+
+    // Layer 2: OverlayPro (click-through except its own UI)
+    const top = document.createElement("div");
+    top.className = "layer layer-top";
+    // Tüm üst katman cam gibi: tıklama almaz
+    top.style.pointerEvents = "none";
+
+    const overlay = document.createElement("overlaypro-card");
+    // Overlay kendi içinde etkileşimli alanları pointer-events:auto yapacak şekilde zaten tasarlandı.
+    // Local portal_mode: inline basın, dışarı taşmasın
+    overlay.setConfig?.({ portal_mode: "local" });
+
+    // Overlay kartın kendisi tıklama alabilsin (ama sadece kendi içindeki alanlar)
+    overlay.style.pointerEvents = "auto";
+    top.appendChild(overlay);
+
+    // Style
+    const style = document.createElement("style");
+    style.textContent = `
+      .scene3dpro-root{
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        overflow: hidden;
+        background: var(--primary-background-color);
       }
-      this._el.hass = hass;
-    }
+      .layer{
+        position: absolute;
+        inset: 0;
+      }
+      .layer-base{
+        z-index: 0;
+      }
+      .layer-top{
+        z-index: 10;
+      }
+    `;
+
+    root.appendChild(style);
+    root.appendChild(base);
+    root.appendChild(top);
+
+    this.innerHTML = "";
+    this.appendChild(root);
+
+    // hass propagate
+    floor.hass = this._hass;
+    overlay.hass = this._hass;
   }
-  if (!customElements.get("ha-panel-scene3dpro")) {
-    customElements.define("ha-panel-scene3dpro", HaPanelScene3DPro);
-  }
-})();
+}
+
+customElements.define("scene3dpro-panel", Scene3DProPanel);

@@ -1,55 +1,51 @@
 from __future__ import annotations
 
-from homeassistant.core import HomeAssistant
+import os
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components import frontend
+from homeassistant.core import HomeAssistant
+from homeassistant.components import panel_custom
+from homeassistant.components.http import StaticPathConfig
 
-from .const import DOMAIN
-
-PANEL_URL = "scene3dpro"
-PANEL_TITLE = "3D Scene Pro"
-SIDEBAR_TITLE = "3D"
-ICON = "mdi:cube-scan"
-
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    return True
+from .const import (
+    DOMAIN,
+    PANEL_URL,
+    PANEL_COMPONENT,
+    SIDEBAR_ICON,
+    SIDEBAR_TITLE,
+    PANEL_TITLE,
+)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    # Serve frontend assets from this integration (no Lovelace resources needed)
-    hass.http.register_static_path(
-        "/api/scene3dpro/scene3dpro.js",
-        hass.config.path("custom_components/scene3dpro/frontend/scene3dpro.js"),
-        cache_headers=False,
-    )
-    hass.http.register_static_path(
-        "/api/scene3dpro/overlaypro-card.js",
-        hass.config.path("custom_components/scene3dpro/frontend/overlaypro-card.js"),
-        cache_headers=False,
-    )
-    hass.http.register_static_path(
-        "/api/scene3dpro/floor3dpro-card.js",
-        hass.config.path("custom_components/scene3dpro/frontend/floor3dpro-card.js"),
-        cache_headers=False,
-    )
-
-    # Register sidebar panel
-    await frontend.async_register_built_in_panel(
-        hass,
-        component_name="custom",
-        sidebar_title=SIDEBAR_TITLE,
-        sidebar_icon=ICON,
-        frontend_url_path=PANEL_URL,
-        config={
-            "_panel_custom": {
-                "name": "ha-panel-scene3dpro",
-                "embed_iframe": False,
-                "trust_external": False,
-                "js_url": "/api/scene3dpro/scene3dpro.js",
-            }
-        },
-        require_admin=False,
-    )
+    """Set up Scene3DPro from a config entry."""
+    await _async_register_panel(hass)
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload config entry."""
+    # Panel kaldırma zorunlu değil; HA restart ile temiz.
     return True
+
+async def _async_register_panel(hass: HomeAssistant) -> None:
+    """Register the sidebar panel (only once)."""
+    # Aynı paneli iki kez eklemeyelim
+    if DOMAIN in hass.data.get("frontend_panels", {}):
+        return
+
+    # /custom_components/scene3dpro/frontend klasörünü statik path olarak yayınla
+    panel_path = os.path.join(os.path.dirname(__file__), "frontend")
+
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(PANEL_URL, panel_path, cache_headers=False)]
+    )
+
+    # Paneli sidebar’a ekle
+    await panel_custom.async_register_panel(
+        hass,
+        webcomponent_name=PANEL_COMPONENT,           # JS tarafındaki customElements.define()
+        sidebar_title=SIDEBAR_TITLE,                # "3D"
+        sidebar_icon=SIDEBAR_ICON,
+        module_url=f"{PANEL_URL}/scene3dpro.js",     # statik path'ten gelecek
+        config={"title": PANEL_TITLE},              # panel props
+        require_admin=False,
+    )
