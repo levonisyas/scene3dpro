@@ -9,6 +9,7 @@ from homeassistant.components.http import StaticPathConfig
 
 from .const import (
     DOMAIN,
+    FRONTEND_URL_PATH,
     PANEL_URL,
     PANEL_COMPONENT,
     SIDEBAR_ICON,
@@ -43,6 +44,7 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name=PANEL_COMPONENT,           # JS tarafındaki customElements.define()
+        frontend_url_path=FRONTEND_URL_PATH,         # /scene3dpro
         sidebar_title=SIDEBAR_TITLE,                # "3D"
         sidebar_icon=SIDEBAR_ICON,
         module_url=f"{PANEL_URL}/scene3dpro.js",     # statik path'ten gelecek
