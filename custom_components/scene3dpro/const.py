@@ -1,5 +1,1 @@
 DOMAIN = "scene3dpro"
-PANEL_URL_PATH = "3d"
-PANEL_TITLE = "3D"
-PANEL_ICON = "mdi:cube"
-PANEL_NAME = "scene3dpro-panel"

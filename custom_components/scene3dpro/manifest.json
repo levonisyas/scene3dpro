@@ -1,17 +1,15 @@
 {
   "domain": "scene3dpro",
-  "name": "Scene3D Pro",
-  "version": "0.0.1",
+  "name": "Scene3DPro",
+  "version": "0.0.2",
   "documentation": "https://github.com/levonisyas/scene3dpro",
-  "issue_tracker": "https://github.com/levonisyas/scene3dpro/issues",
   "requirements": [],
   "dependencies": [
-    "http",
-    "frontend",
-    "panel_custom"
+    "frontend"
   ],
   "codeowners": [
     "@levonisyas"
   ],
+  "config_flow": true,
   "iot_class": "local_push"
 }

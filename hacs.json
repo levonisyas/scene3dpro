@@ -1,8 +1,6 @@
 {
-  "name": "Scene3D Pro",
+  "name": "Scene3DPro",
   "content_in_root": false,
-  "render_readme": true,
-  "domains": [
-    "scene3dpro"
-  ]
+  "zip_release": false,
+  "render_readme": true
 }
