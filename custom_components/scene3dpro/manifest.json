@@ -1,11 +1,11 @@
 {
-  "domain": "scene3dpro",
+  "domain": "scene3d_pro",
   "name": "Scene3D Pro",
-  "version": "0.0.1",
-  "documentation": "https://github.com/levonisyas/scene3dpro",
-  "issue_tracker": "https://github.com/levonisyas/scene3dpro/issues",
+  "version": "0.1.0",
+  "documentation": "https://github.com/levonisyas/scene3d-pro",
+  "dependencies": ["lovelace"],
+  "after_dependencies": ["frontend"],
   "codeowners": ["@levonisyas"],
-  "config_flow": true,
-  "dependencies": ["http", "frontend", "panel_custom"],
-  "iot_class": "local_polling"
+  "config_flow": false
 }
+
